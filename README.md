@@ -1,53 +1,53 @@
 # Where Am I? — Image-based Geolocalization from Google Maps Data
 
-**Universidade da Beira Interior (UBI) — Departamento de Informática**
-**Autor:** José Marques | **Orientador:** Hugo Proença | **Ano:** 2022
+**Universidade da Beira Interior (UBI) — Department of Computer Science**
+**Author:** José Marques | **Supervisor:** Hugo Proença | **Year:** 2022
 
 ---
 
-## Descrição
+## Overview
 
-Sistema de **geolocalização baseado em imagem** que, dada uma fotografia, prevê as **coordenadas GPS (latitude, longitude)** do local onde foi tirada. O problema é tratado como um problema de **classificação de imagens**, onde cada classe corresponde a um par de coordenadas arredondado a 4 casas decimais (precisão de ~10 metros de raio).
+An **image-based geolocalization system** that, given a photograph, predicts the **GPS coordinates (latitude, longitude)** of the location where it was taken. The problem is framed as an **image classification task**, where each class corresponds to a GPS coordinate pair rounded to 4 decimal places (~10 metre radius precision).
 
-A área de cobertura é a **cidade da Covilhã**, Portugal (centro e arredores da Universidade da Beira Interior), com um conjunto de dados recolhido manualmente com telemóvel.
+The coverage area is the **city of Covilhã**, Portugal (city centre and surroundings of Universidade da Beira Interior), using a dataset collected manually with a mobile phone.
 
 ---
 
 ## Dataset
 
-- **Total de imagens:** 2967 fotografias da Covilhã
-- **Conjunto de treino:** 2739 imagens (usadas em diferentes rácios)
-- **Conjunto de teste:** 228 imagens (fixo ao longo de todos os testes)
-- **Número de classes:** 1484 pares de coordenadas distintos
-- **Resolução de coordenadas:** 4 casas decimais → ~10 metros de raio por classe
-- **Recolha:** manual, com aplicação móvel que armazena GPS nas meta-informações EXIF
+- **Total images:** 2967 photographs of Covilhã
+- **Training set:** 2739 images (used in different split ratios across experiments)
+- **Test set:** 228 images (fixed across all experiments)
+- **Number of classes:** 1484 distinct coordinate pairs
+- **Coordinate precision:** 4 decimal places → ~10 metre radius per class
+- **Collection method:** manual, using a mobile app that stores GPS data in image EXIF metadata
 
-> O conjunto de dados é pequeno face aos modelos do estado da arte, que utilizam milhões de imagens. Para compensar, recorreu-se a **data augmentation** (rotação, zoom, shear, brilho, flip horizontal e vertical).
+> The dataset is small compared to state-of-the-art models that use millions of images. To compensate, **data augmentation** was applied (rotation, zoom, shear, brightness, horizontal and vertical flips).
 
 ---
 
-## Arquiteturas Testadas
+## Architectures Tested
 
-| Modelo         | Input    | Épocas | Batch | Learning Rate | Std Dev    |
+| Model          | Input    | Epochs | Batch | Learning Rate | Std Dev    |
 |----------------|----------|--------|-------|---------------|------------|
 | ResNet152      | 224×224  | 500    | 19    | 0.002         | 413.53 m   |
 | VGG19          | 224×224  | 500    | 19    | 0.002         | 517.30 m   |
 | EfficientNetB2 | 260×260  | 500    | 19    | 0.002         | 480.65 m   |
 | EfficientNetB2 | 260×260  | 1500   | 19    | 0.002         | 388.16 m   |
 
-Todos os modelos usam:
-- **Transfer learning** com pesos ImageNet (camadas base congeladas)
-- **Otimizador:** Adagrad
+All models use:
+- **Transfer learning** with ImageNet pre-trained weights (frozen base layers)
+- **Optimizer:** Adagrad
 - **Loss:** Sparse Categorical Cross-Entropy
-- **Métricas:** Sparse Categorical Accuracy, Top-5 Accuracy
+- **Metrics:** Sparse Categorical Accuracy, Top-5 Accuracy
 
 ---
 
-## Resultados
+## Results
 
-### Comparação dos Modelos Iniciais (Conjunto de Teste — 228 imagens)
+### Initial Model Comparison (Test Set — 228 images)
 
-| Distância  | ResNet152 | VGG19  | EffNetB2 (500ep) | EffNetB2 (1500ep) |
+| Distance   | ResNet152 | VGG19  | EffNetB2 (500ep) | EffNetB2 (1500ep) |
 |------------|-----------|--------|------------------|-------------------|
 | < 5 m      | 0.00%     | 14.54% | 29.07%           | 33.48%            |
 | < 10 m     | 0.88%     | 20.26% | 41.85%           | 48.02%            |
@@ -61,11 +61,11 @@ Todos os modelos usam:
 | < 1500 m   | 95.59%    | 95.59% | 96.92%           | 98.24%            |
 | **Std Dev**| 413.53 m  | 517.30 m | 480.65 m       | 388.16 m          |
 
-> A **EfficientNetB2** foi a arquitectura que melhor se adaptou às limitações do tamanho do conjunto de dados e foi selecionada para otimização.
+> **EfficientNetB2** best adapted to the dataset size constraints and was selected for further optimization.
 
 ---
 
-### Otimização do Learning Rate (EfficientNetB2, 500 épocas)
+### Learning Rate Optimization (EfficientNetB2, 500 epochs)
 
 | Learning Rate | < 5 m  | < 10 m | < 25 m | < 50 m | < 100 m | Std Dev    |
 |---------------|--------|--------|--------|--------|---------|------------|
@@ -74,11 +74,11 @@ Todos os modelos usam:
 | 0.1           | 37.44% | 55.07% | 61.23% | 69.16% | 74.89%  | 349.36 m   |
 | 0.25          | 38.77% | 52.86% | 57.27% | 65.20% | 69.60%  | 339.01 m   |
 
-> **Conclusão:** Learning rate de **0.01** produziu os melhores resultados.
+> **Conclusion:** A learning rate of **0.01** yielded the best results.
 
 ---
 
-### Otimização do Batch Size (EfficientNetB2, lr=0.01, 500 épocas)
+### Batch Size Optimization (EfficientNetB2, lr=0.01, 500 epochs)
 
 | Batch Size | < 5 m  | < 10 m | < 25 m | < 50 m | < 100 m | Std Dev    |
 |------------|--------|--------|--------|--------|---------|------------|
@@ -87,13 +87,13 @@ Todos os modelos usam:
 | 24         | 38.77% | 54.19% | 60.79% | 71.81% | 75.77%  | 307.27 m   |
 | 32         | 39.21% | 54.19% | 61.67% | 72.25% | 75.77%  | 355.33 m   |
 
-> **Conclusão:** Batch size menor → menor desvio padrão. **Batch size 4** foi o melhor.
+> **Conclusion:** Smaller batch size → lower standard deviation. **Batch size 4** performed best.
 
 ---
 
-### Tamanho do Conjunto de Validação (EfficientNetB2, lr=0.01, batch=4, rácio 60/40)
+### Validation Set Size (EfficientNetB2, lr=0.01, batch=4, 60/40 split)
 
-| Distância  | Percentagem |
+| Distance   | Percentage  |
 |------------|-------------|
 | < 5 m      | 36.56%      |
 | < 10 m     | 52.42%      |
@@ -109,9 +109,9 @@ Todos os modelos usam:
 
 ---
 
-### Modelo Final — Resultados (EfficientNetB2, lr=0.01, batch=1, 500 épocas, sem validação)
+### Final Model Results (EfficientNetB2, lr=0.01, batch=1, 500 epochs, no validation set)
 
-| Distância  | Percentagem |
+| Distance   | Percentage  |
 |------------|-------------|
 | < 5 m      | **42.29%**  |
 | < 10 m     | **61.23%**  |
@@ -125,74 +125,74 @@ Todos os modelos usam:
 | < 1500 m   | **100.00%** |
 | **Std Dev**| **274.56 m**|
 
-> O modelo final prevê a localização dentro de **61.23% dos casos a menos de 10 metros** e **100% dos casos a menos de 1500 metros**.
+> The final model predicts the location within **61.23% of cases to under 10 metres** and **100% of cases to under 1500 metres**.
 
 ---
 
-### Teste com Imagens Parciais (recortadas)
+### Partial Image Test (cropped images)
 
-Para validar a importância da abrangência visual da imagem, testou-se o modelo final com versões recortadas das imagens de teste:
+To validate the importance of image coverage, the final model was tested on cropped versions of the test images:
 
-| Distância  | Imagens Completas | Imagens Parciais |
-|------------|-------------------|------------------|
-| < 5 m      | 42.29%            | 0.00%            |
-| < 10 m     | 61.23%            | 0.00%            |
-| < 20 m     | 66.08%            | 0.88%            |
-| < 50 m     | 77.09%            | 3.98%            |
-| < 100 m    | 80.62%            | 7.08%            |
-| < 250 m    | 84.58%            | 31.86%           |
-| < 500 m    | 89.87%            | 54.42%           |
-| < 800 m    | 95.15%            | 78.32%           |
-| < 1000 m   | 96.92%            | 81.86%           |
-| < 1500 m   | 100.00%           | 95.13%           |
-| **Std Dev**| **274.56 m**      | **439.48 m**     |
+| Distance   | Full Images | Partial Images |
+|------------|-------------|----------------|
+| < 5 m      | 42.29%      | 0.00%          |
+| < 10 m     | 61.23%      | 0.00%          |
+| < 20 m     | 66.08%      | 0.88%          |
+| < 50 m     | 77.09%      | 3.98%          |
+| < 100 m    | 80.62%      | 7.08%          |
+| < 250 m    | 84.58%      | 31.86%         |
+| < 500 m    | 89.87%      | 54.42%         |
+| < 800 m    | 95.15%      | 78.32%         |
+| < 1000 m   | 96.92%      | 81.86%         |
+| < 1500 m   | 100.00%     | 95.13%         |
+| **Std Dev**| **274.56 m**| **439.48 m**   |
 
-> Imagens com poucos detalhes discriminativos (muito próximas ou muito recortadas) degradam significativamente o desempenho.
-
----
-
-## Limitações do Modelo
-
-1. **Imagens muito próximas** — poucos detalhes discriminativos para identificar a localização
-2. **Imagens muito abrangentes** — múltiplas características de zonas diferentes confundem o modelo
-3. **Imagens noturnas** — dataset sem exemplos noturnos
-4. **Fora da área de cobertura** — qualquer imagem fora da Covilhã produzirá previsões incorretas
+> Images with too few discriminative features (too close or heavily cropped) significantly degrade performance.
 
 ---
 
-## Estrutura do Projeto
+## Model Limitations
+
+1. **Images taken too close** — insufficient discriminative details to confidently assign a class
+2. **Images taken too far** — multiple features from different locations confuse the model
+3. **Nighttime images** — the dataset contains no night examples
+4. **Outside coverage area** — any image from outside Covilhã will always produce incorrect predictions
+
+---
+
+## Project Structure
 
 ```
 projetoFinal_geolocation/
 │
-├── EfficientNetB2.py                        # Treino com EfficientNetB2
-├── Restnet152.py                            # Treino com ResNet152
-├── VGG19.py                                 # Treino com VGG19
+├── EfficientNetB2.py                        # Train with EfficientNetB2
+├── Restnet152.py                            # Train with ResNet152
+├── VGG19.py                                 # Train with VGG19
 │
-├── Testar_apenas_uma_imagem.py              # Prever localização de uma imagem
-├── Testar_no_conjunto_de_teste.py           # Avaliar no conjunto de teste completo
-├── verificar_distancias.py                  # Análise das métricas de distância
+├── Testar_apenas_uma_imagem.py              # Predict location for a single image
+├── Testar_no_conjunto_de_teste.py           # Evaluate on the full test set
+├── verificar_distancias.py                  # Analyse distance prediction metrics
 │
-├── Get_image_coordinates.py                 # Extrair GPS das meta-informações EXIF
-├── get_image_coordinates_quadradasja.py     # Variante da extração GPS
-├── Remove_empty_dirs.py                     # Remover diretórios vazios
-├── remove_same_name.py                      # Remover ficheiros duplicados
+├── Get_image_coordinates.py                 # Extract GPS from image EXIF metadata
+├── get_image_coordinates_quadradasja.py     # Variant of GPS extraction
+├── Remove_empty_dirs.py                     # Remove empty directories from dataset
+├── remove_same_name.py                      # Remove duplicate filenames
 │
-├── projeto.yml                              # Definição do ambiente Conda
-└── distancias_effb2_covilha_1500epochs_*   # Resultados pré-calculados (pickle)
+├── projeto.yml                              # Conda environment definition
+└── distancias_effb2_covilha_1500epochs_*   # Pre-computed evaluation results (pickle)
 ```
 
 ---
 
-## Instalação
+## Setup
 
-### Requisitos
+### Requirements
 
 - Windows 10/11
-- [Anaconda](https://www.anaconda.com/) ou Miniconda
-- GPU NVIDIA com suporte CUDA 11.3 (recomendado)
+- [Anaconda](https://www.anaconda.com/) or Miniconda
+- NVIDIA GPU with CUDA 11.3 support (recommended)
 
-### Configuração do Ambiente
+### Installation
 
 ```bash
 git clone https://github.com/Lenhas/projetoFinal_geolocation.git
@@ -204,39 +204,39 @@ conda activate Resnet
 
 ---
 
-## Utilização
+## Usage
 
-### 1. Preparar o Dataset
+### 1. Prepare the Dataset
 
-Coloca as imagens em pastas com o nome das coordenadas GPS (`lat,lon`) ou extrai as coordenadas automaticamente:
+Place images in folders named by GPS coordinates (`lat,lon`) or extract coordinates automatically:
 
 ```bash
 python Get_image_coordinates.py
 ```
 
-### 2. Treinar um Modelo
+### 2. Train a Model
 
 ```bash
-python EfficientNetB2.py   # Melhor resultado
+python EfficientNetB2.py   # Best results
 python Restnet152.py
 python VGG19.py
 ```
 
-### 3. Testar numa Imagem
+### 3. Test on a Single Image
 
 ```bash
 python Testar_apenas_uma_imagem.py
 ```
 
-Gera um mapa HTML interativo com a localização prevista vs. real.
+Outputs an interactive HTML map showing predicted vs. actual location.
 
-### 4. Avaliar no Conjunto de Teste
+### 4. Evaluate on the Full Test Set
 
 ```bash
 python Testar_no_conjunto_de_teste.py
 ```
 
-### 5. Analisar Distâncias
+### 5. Analyse Distance Results
 
 ```bash
 python verificar_distancias.py
@@ -244,39 +244,39 @@ python verificar_distancias.py
 
 ---
 
-## Trabalho Futuro
+## Future Work
 
-- Expandir a área de cobertura para Portugal ou o mundo
-- Adicionar imagens noturnas ao dataset
-- Aumentar o dataset com imagens de múltiplas fontes públicas
+- Expand coverage area to Portugal or worldwide
+- Add nighttime images to the dataset
+- Increase dataset size using publicly available geotagged image sources
 
 ---
 
-## Tecnologias
+## Dependencies
 
-| Pacote             | Versão    | Uso                              |
+| Package            | Version   | Purpose                          |
 |--------------------|-----------|----------------------------------|
-| TensorFlow (GPU)   | 2.5.0     | Framework de deep learning       |
-| OpenCV             | 4.5.5.64  | Processamento de imagem          |
-| Pillow             | 9.0.1     | I/O de imagens                   |
-| NumPy              | 1.22.3    | Computação numérica              |
-| Pandas             | 1.4.1     | Manipulação de dados             |
-| Scikit-learn       | 1.0.2     | Divisão de dados e utilitários   |
-| GeoPy              | 2.2.0     | Cálculo de distância geodésica   |
-| GPSPhoto           | 2.2.3     | Extração de GPS do EXIF          |
-| Folium             | 0.12.1    | Visualização em mapa interativo  |
-| CUDA Toolkit       | 11.3.1    | Aceleração GPU                   |
-| cuDNN              | 8.2.1     | Primitivas GPU para deep learning|
+| TensorFlow (GPU)   | 2.5.0     | Deep learning framework          |
+| OpenCV             | 4.5.5.64  | Image processing                 |
+| Pillow             | 9.0.1     | Image I/O                        |
+| NumPy              | 1.22.3    | Numerical computing              |
+| Pandas             | 1.4.1     | Data manipulation                |
+| Scikit-learn       | 1.0.2     | Data splitting and utilities     |
+| GeoPy              | 2.2.0     | Geodesic distance computation    |
+| GPSPhoto           | 2.2.3     | EXIF GPS extraction              |
+| Folium             | 0.12.1    | Interactive map visualisation    |
+| CUDA Toolkit       | 11.3.1    | GPU acceleration                 |
+| cuDNN              | 8.2.1     | GPU deep learning primitives     |
 
 ---
 
-## Referência
+## Reference
 
 > *"Where Am I? Image-based Geolocalization from Google Maps Data"*
-> José Marques, orientado por Hugo Proença — Universidade da Beira Interior, 2022
+> José Marques, supervised by Hugo Proença — Universidade da Beira Interior, 2022
 
 ---
 
-## Licença
+## License
 
-Projeto académico — Universidade da Beira Interior.
+Academic project — Universidade da Beira Interior.
